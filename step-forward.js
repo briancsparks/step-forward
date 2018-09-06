@@ -92,6 +92,14 @@ exports.command = function(name, options_, buildParams, postRun) {
   };
 };
 
+exports.parseArgs = function(name, options_, parseParams) {
+  const options1 = options_ || {};
+
+  return async function(args_) {
+    const { commandName, args, options } = await parseParams({}, args_);
+  };
+};
+
 exports.groc = {
   std:  require('./lib/cli-switch/std').groc,
 };
