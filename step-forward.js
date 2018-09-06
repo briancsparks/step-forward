@@ -11,7 +11,11 @@ const exec                    = promisify(require('child_process').exec);
 const {
   lookup
 }                             = require('./lib/lookup');
+const jetpack                 = require('fs-jetpack');
 const Orchestrator            = require('orchestrator');
+
+
+var lib = {};
 
 exports.Runner = function(...args) {
   var self = this;
@@ -39,8 +43,18 @@ exports.Runner.run = function(main) {
   });
 };
 
-exports.command = function(name, options_, buildParams, postRun) {
-  const options1 = options_ || {};
+exports.command = function(name, options_, buildParams_, postRun_) {
+  if (arguments.length >= 3) {
+    return exports.command(name, kv({...options_}, 'options1', options_, 'buildParams', buildParams_, 'postRun', postRun_));
+  }
+
+  const {
+    options1,
+    defaultParams,
+    buildParams,
+    postRun }             = options_ || {};
+
+  // const options1 = options_ || {};
 
   return async function(params_) {
     var   params = params_;
@@ -52,6 +66,10 @@ exports.command = function(name, options_, buildParams, postRun) {
     if (params[name] === 0 || params[name] === false) {
       logit(`Skipping ${name}`);
       return Promise.resolve({skipped:name});
+    }
+
+    if (defaultParams) {
+      params = await defaultParams(params);
     }
 
     // Get the command implementation to build the command-line
@@ -82,7 +100,7 @@ exports.command = function(name, options_, buildParams, postRun) {
     var { stdout, stderr, ...rest } = execResult;
     // rest.json = {};
 
-    rest.json = kv({}, 'stdout', safeJSONParse(stdout), 'stderr', safeJSONParse(stderr));
+    rest.json = kv({}, 'stdout', safeJSONParse(stdout) || {just:stdout.split('\n')}, 'stderr', safeJSONParse(stderr));
 
     // rest.json.stdout = safeJSONParse(stdout);
     // rest.json.stderr = safeJSONParse(stderr);
@@ -110,6 +128,32 @@ exports.groc = {
   std:  require('./lib/cli-switch/std').groc,
 };
 
+exports.fns = {};
+
+exports.fns.git = {};
+
+exports.git = function() {
+  const rev_parse       = exports.fns.git.rev_parse = lookup('git', 'rev-parse');
+
+  return {
+    rev_parse
+  };
+};
+
+var foundGitRoot;
+lib.gitRoot = exports.gitRoot = async function() {
+  if (foundGitRoot) {
+    return foundGitRoot;
+  }
+
+  const rev_parse =  exports.fns.git.rev_parse || (exports.git().rev_parse);
+  const root = await rev_parse({show_toplevel:true});
+  foundGitRoot = jetpack.cwd(root.json.stdout.just[0]);
+
+  return foundGitRoot;
+}
+
+
 exports.claudia = function() {
   const create      = lookup('claudia', 'create');
   const pack        = lookup('claudia', 'pack');
@@ -118,6 +162,10 @@ exports.claudia = function() {
 
   return { create, pack, setVersion, update };
 };
+
+// lib.gitRoot().then(result => {
+//   console.log(result);
+// });
 
 function logit(...args) {
   console.log(...args.reduce(function(m0, arg) {
