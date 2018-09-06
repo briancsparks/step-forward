@@ -1,7 +1,15 @@
 #!/usr/bin/env node
 
+const path                    = require('path');
+
+// const argv = require('minimist')(process.argv.slice(2));
+const argv = require('minimist')('claudia create --subnet-ids subnet-c0cf7088,subnet-5bb24a01,subnet-045f9c28,subnet-04386838 --scurity-group-ids sg-4b9ff335,sg-539cf02d --version dev --region us-east-1 --handler lambda.handler --deploy-proxy-api --use-s3-bucket netlab-dev'.split(' '));
+
+console.log({argv});
+
 const getFn = function(modname, fname) {
   try {
+    // const mod = require(path.join('..', 'lib', 'known', modname, fname));
     const mod = require(`../lib/known/${modname}/${fname}`);
     if (mod) {
       return mod[fname];
@@ -10,6 +18,7 @@ const getFn = function(modname, fname) {
   }
 
   try {
+    // const mod = require(path.join('..', 'lib', 'known', ...modname.split('/')));
     const mod = require(`../lib/known/${modname}`);
     if (mod) {
       return mod[fname];
@@ -34,13 +43,6 @@ const two = function(mod, name, ...rest) {
   return  two(`${mod}/${name}`, sub,  ...nextRest) ||
           getFnArgv(`${mod}/${name}`, name, rest) ||
           getFnArgv(mod, name, rest);
-
-  // function findFn() {
-  //   var fn;
-  //   if ((fn = getFn(mod, name))) {
-  //     return {fn, argv: rest};
-  //   }
-  // };
 };
 
 const one = function(name, ...rest) {
@@ -56,29 +58,16 @@ const one = function(name, ...rest) {
   }
 };
 
-// const one = function(a, ...b) {
-//   console.log(`trying: ${a}::${b}`);
-
-//   var mod;
-//   if (!(mod = require(a))) {
-//     const subcmd = b[0];
-//     if (!subcmd) {
-//       console.error(`Cannot find how to execute: ${process.argv.join(' ')}`);
-//       return;
-//     }
-
-//     return one(`${a} ${subcmd}`, b.slice(1));
-//   }
-
-//   console.log(`Found mod: ${a}, trying...`);
-// };
-
 const runIt = function(...args) {
   const fn = one(...args);
   if (fn) {
-    fn.fn(...fn.argv);
+    const argv = require('minimist')(fn.argv);
+    fn.fn(argv);
   }
 };
 
-runIt('claudia', 'create', '--arg_one');
-// runIt(process.argv.slice(2));
+// runIt('claudia', 'create', '--arg_one');
+const args = process.argv.slice(2);
+// const args = ['claudia', 'create', '--arg_one'];
+// const args = 'claudia create --subnet-ids subnet-c0cf7088,subnet-5bb24a01,subnet-045f9c28,subnet-04386838 --scurity-group-ids sg-4b9ff335,sg-539cf02d --version dev --region us-east-1 --handler lambda.handler --deploy-proxy-api --use-s3-bucket netlab-dev'.split(' ');
+runIt(...args);

@@ -1,11 +1,47 @@
 
+const _                       = require('underscore');
 const {
   promisify,
   inspect }                   = require('util');
+const {
+  kv,
+  safeJSONParse
+}                             = require('./lib/utils');
 const exec                    = promisify(require('child_process').exec);
+const {
+  lookup
+}                             = require('./lib/lookup');
+const Orchestrator            = require('orchestrator');
 
+exports.Runner = function(...args) {
+  var self = this;
 
-exports.command = function(name, buildParams, postRun) {
+  self.orc = new Orchestrator(...args);
+
+  self.add = function(...args) {
+    return orc.add(...args);
+  };
+
+  self.start = function(...args) {
+    return orc.start(...args);
+  };
+};
+
+exports.Runner.run = function(main) {
+
+  const runner = async function() {
+    return await main();
+  };
+
+  runner().then((result) => {
+  })
+  .catch((err) => {
+  });
+};
+
+exports.command = function(name, options_, buildParams, postRun) {
+  const options1 = options_ || {};
+
   return async function(params) {
 
     // Any command can be skipped by its name
@@ -15,30 +51,37 @@ exports.command = function(name, buildParams, postRun) {
     }
 
     // Get the command implementation to build the command-line
-    const { commandName, args } = await buildParams('', params);
+    const { commandName, args, options } = await buildParams('', params);
 
+    const options2              = _.extend({}, options1, options);
     const commandLine           = `${commandName} ${flattenArgs(args)}`;
 
     logit(`Task: ${name}\n  ${commandLine}`);
 
     var   execResult;
-    // var   { stdout, stderr, rest } = {};
-    try {
-      execResult = await exec(commandLine);
-    } catch(error) {
-      if (error.message) {
-        console.error(error.message);
-      }
-      // console.error(error);
+    if (options2.dry_run || options2.dryRun) {
+      execResult = {stdout:'', stderr:''};
+    } else {
+      // var   { stdout, stderr, rest } = {};
+      try {
+        execResult = await exec(commandLine);
+      } catch(error) {
+        if (error.message) {
+          console.error(error.message);
+        }
+        // console.error(error);
 
-      throw error;
+        throw error;
+      }
     }
 
     var { stdout, stderr, ...rest } = execResult;
-    rest.json = {};
+    // rest.json = {};
 
-    rest.json.stdout = safeJSONParse(stdout);
-    rest.json.stderr = safeJSONParse(stderr);
+    rest.json = kv({}, 'stdout', safeJSONParse(stdout), 'stderr', safeJSONParse(stderr));
+
+    // rest.json.stdout = safeJSONParse(stdout);
+    // rest.json.stderr = safeJSONParse(stderr);
 
     if (postRun) {
       await postRun({stdout, stderr, ...rest});
@@ -51,6 +94,15 @@ exports.command = function(name, buildParams, postRun) {
 
 exports.groc = {
   std:  require('./lib/cli-switch/std').groc,
+};
+
+exports.claudia = function() {
+  const create      = lookup('claudia', 'create');
+  const pack        = lookup('claudia', 'pack');
+  const setVersion  = lookup('claudia', 'set-version');
+  const update      = lookup('claudia', 'update');
+
+  return { create, pack, setVersion, update };
 };
 
 function logit(...args) {
