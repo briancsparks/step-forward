@@ -42,7 +42,11 @@ exports.Runner.run = function(main) {
 exports.command = function(name, options_, buildParams, postRun) {
   const options1 = options_ || {};
 
-  return async function(params) {
+  return async function(params_) {
+    var   params = params_;
+    if (Array.isArray(params)) {
+      params = require('minimist')(params);
+    }
 
     // Any command can be skipped by its name
     if (params[name] === 0 || params[name] === false) {
@@ -96,7 +100,9 @@ exports.parseArgs = function(name, options_, parseParams) {
   const options1 = options_ || {};
 
   return async function(args_) {
-    const { commandName, args, options } = await parseParams({}, args_);
+    const args = require('minimist')(args_);
+    const { result } = await parseParams({}, args, true);
+    return result;
   };
 };
 
