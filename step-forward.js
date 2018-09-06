@@ -6,30 +6,51 @@ const exec                    = promisify(require('child_process').exec);
 
 
 exports.command = function(name, buildParams, postRun) {
-  return async function(argv) {
+  return async function(params) {
 
     // Any command can be skipped by its name
-    if (argv[name] === 0 || argv[name] === false) {
+    if (params[name] === 0 || params[name] === false) {
       logit(`Skipping ${name}`);
       return Promise.resolve({skipped:name});
     }
 
     // Get the command implementation to build the command-line
-    const { commandName, args } = await buildParams(argv);
+    const { commandName, args } = await buildParams('', params);
 
     const commandLine           = `${commandName} ${flattenArgs(args)}`;
 
-    logit(`Task: ${name}\n  ${commandName}`);
+    logit(`Task: ${name}\n  ${commandLine}`);
 
-    const { stdout, stderr, ...rest } = await exec(commandLine);
+    var   execResult;
+    // var   { stdout, stderr, rest } = {};
+    try {
+      execResult = await exec(commandLine);
+    } catch(error) {
+      if (error.message) {
+        console.error(error.message);
+      }
+      // console.error(error);
 
-    if (postFn) {
-      await postFn();
+      throw error;
+    }
+
+    var { stdout, stderr, ...rest } = execResult;
+    rest.json = {};
+
+    rest.json.stdout = safeJSONParse(stdout);
+    rest.json.stderr = safeJSONParse(stderr);
+
+    if (postRun) {
+      await postRun({stdout, stderr, ...rest});
     }
 
     logExec(`${name} done`, {stdout, stderr});
     return {stdout, stderr, ...rest};
   };
+};
+
+exports.groc = {
+  std:  require('./lib/cli-switch/std').groc,
 };
 
 function logit(...args) {
