@@ -23,12 +23,25 @@ exports.Runner = function(...args) {
   self.orc = new Orchestrator(...args);
 
   self.add = function(...args) {
-    return orc.add(...args);
+    return self.orc.add(...args);
   };
 
   self.start = function(...args) {
-    return orc.start(...args);
+    return self.orc.start(...args);
   };
+
+  /**
+   *  Orchastrator has finished. Log it.
+   */
+  self.reportDone = function(resolve, reject, err, result) {
+    if (err && !err.missingTask)      { console.error(err); return reject(err); }
+
+    if (err && err.missingTask) {
+      result = {...result, missingTask: err.missingTask, taskList: err.taskList};
+    }
+
+    return resolve(result);
+  }
 };
 
 exports.Runner.run = function(main) {
@@ -57,7 +70,7 @@ exports.command = function(name, options_, buildParams_, postRun_) {
   // const options1 = options_ || {};
 
   return async function(params_) {
-    var   params = params_;
+    var   params = params_, others = {};
     if (Array.isArray(params)) {
       params = require('minimist')(params);
     }
@@ -69,7 +82,9 @@ exports.command = function(name, options_, buildParams_, postRun_) {
     }
 
     if (defaultParams) {
-      params = await defaultParams(params);
+      const defs = await defaultParams(params);
+      params = defs.params;
+      others = defs.others;
     }
 
     // Get the command implementation to build the command-line
@@ -106,7 +121,7 @@ exports.command = function(name, options_, buildParams_, postRun_) {
     // rest.json.stderr = safeJSONParse(stderr);
 
     if (postRun) {
-      await postRun({stdout, stderr, ...rest});
+      await postRun({stdout, stderr, ...rest}, params, others);
     }
 
     logExec(`${name} done`, {stdout, stderr});

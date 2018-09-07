@@ -4,7 +4,8 @@
   "description": "A spawn/exec-like library optimized for basic control flow.",
   "main": "step-forward.js",
   "bin": {
-    "stfx": "bin/stf-execute.js"
+    "stfx": "bin/stf-execute.js",
+    "stf-init": "bin/stf-init.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
