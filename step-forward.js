@@ -148,7 +148,7 @@ exports.fns = {};
 exports.fns.git = {};
 
 exports.git = function() {
-  const rev_parse       = exports.fns.git.rev_parse = lookup('git', 'rev-parse');
+  const rev_parse       = exports.fns.git.rev_parse = lookup('git', 'rev-parse').fn;
 
   return {
     rev_parse
@@ -170,10 +170,10 @@ lib.gitRoot = exports.gitRoot = async function() {
 
 
 exports.claudia = function() {
-  const create      = lookup('claudia', 'create');
-  const pack        = lookup('claudia', 'pack');
-  const setVersion  = lookup('claudia', 'set-version');
-  const update      = lookup('claudia', 'update');
+  const create      = lookup('claudia', 'create').fn;
+  const pack        = lookup('claudia', 'pack').fn;
+  const setVersion  = lookup('claudia', 'set-version').fn;
+  const update      = lookup('claudia', 'update').fn;
 
   return { create, pack, setVersion, update };
 };
