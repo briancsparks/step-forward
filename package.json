@@ -1,6 +1,6 @@
 {
   "name": "step-forward",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A spawn/exec-like library optimized for basic control flow.",
   "main": "index.js",
   "bin": {
