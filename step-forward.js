@@ -1,23 +1,28 @@
 
-const _                       = require('underscore');
+const libPower                = require('./lib/power');
 const {
-  promisify,
-  inspect }                   = require('util');
-const {
+  _,
+  powerSquad,
   kv,
+  minimistify,
+  promisify,
+  jetpack,
   safeJSONParse
-}                             = require('./lib/utils');
+}                             = libPower;
+const power                   = powerSquad(module);
+const {
+  inspect }                   = require('util');
 const exec                    = promisify(require('child_process').exec);
 const {
   lookup
 }                             = require('./lib/lookup');
-const jetpack                 = require('fs-jetpack');
 const Orchestrator            = require('orchestrator');
 
+exports.libPower              = libPower;
 
 var lib = {};
 
-exports.Runner = function(...args) {
+power.xport({Runner: function(...args) {
   var self = this;
 
   self.orc = new Orchestrator(...args);
@@ -42,7 +47,7 @@ exports.Runner = function(...args) {
 
     return resolve(result);
   }
-};
+}});
 
 exports.Runner.run = function(main) {
 
@@ -56,7 +61,20 @@ exports.Runner.run = function(main) {
   });
 };
 
-exports.command = function(name, options_, buildParams_, postRun_) {
+power.xport({run: function(main) {
+
+  const runner = async function() {
+    return await main();
+  };
+
+  runner().then((result) => {
+  })
+  .catch((err) => {
+  });
+
+}});
+
+power.xport({command: function(name, options_, buildParams_, postRun_) {
   if (arguments.length >= 3) {
     return exports.command(name, kv({...options_}, 'options1', options_, 'buildParams', buildParams_, 'postRun', postRun_));
   }
@@ -72,7 +90,7 @@ exports.command = function(name, options_, buildParams_, postRun_) {
   return async function(params_) {
     var   params = params_, others = {};
     if (Array.isArray(params)) {
-      params = require('minimist')(params);
+      params = minimistify(params);
     }
 
     // Any command can be skipped by its name
@@ -127,9 +145,9 @@ exports.command = function(name, options_, buildParams_, postRun_) {
     logExec(`${name} done`, {stdout, stderr});
     return {stdout, stderr, ...rest};
   };
-};
+}});
 
-exports.parseArgs = function(name, options_, parseParams) {
+power.xport({parseArgs: function(name, options_, parseParams) {
   const options1 = options_ || {};
 
   return async function(args_) {
@@ -137,7 +155,7 @@ exports.parseArgs = function(name, options_, parseParams) {
     const { result } = await parseParams({}, args, true);
     return result;
   };
-};
+}});
 
 exports.groc = {
   std:  require('./lib/cli-switch/std').groc,

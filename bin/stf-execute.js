@@ -2,8 +2,8 @@
 
 const path                    = require('path');
 
-// const argv = require('minimist')(process.argv.slice(2));
-const argv = require('minimist')('claudia create --subnet-ids subnet-c0cf7088,subnet-5bb24a01,subnet-045f9c28,subnet-04386838 --security-group-ids sg-4b9ff335,sg-539cf02d --version dev --region us-east-1 --handler lambda.handler --deploy-proxy-api --use-s3-bucket netlab-dev'.split(' '));
+const argv = require('minimist')(process.argv.slice(2));
+// const argv = require('minimist')('claudia create --subnet-ids subnet-c0cf7088,subnet-5bb24a01,subnet-045f9c28,subnet-04386838 --security-group-ids sg-4b9ff335,sg-539cf02d --version dev --region us-east-1 --handler lambda.handler --deploy-proxy-api --use-s3-bucket netlab-dev'.split(' '));
 
 // console.log({argv});
 

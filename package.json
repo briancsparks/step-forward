@@ -2,7 +2,7 @@
   "name": "step-forward",
   "version": "1.0.2",
   "description": "A spawn/exec-like library optimized for basic control flow.",
-  "main": "step-forward.js",
+  "main": "index.js",
   "bin": {
     "stfx": "bin/stf-execute.js",
     "stf-init": "bin/stf-init.js"
